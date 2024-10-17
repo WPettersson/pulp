@@ -624,6 +624,37 @@ class BaseSolverTest:
                     slacks={"c1": 2, "c2": 0, "c3": 0},
                 )
 
+        def test_dual_variables_reduced_costs_maximize(self):
+            """
+            Test the reporting of dual variables slacks and reduced costs
+            """
+            prob = LpProblem(self._testMethodName, const.LpMaximize)
+            x = LpVariable("x", 0, 4)
+            y = LpVariable("y", -1, 1)
+            z = LpVariable("z", 0)
+            prob += x + 4 * y + 9 * z, "obj"
+            prob += x + y <= 5, "c1"
+            prob += x + z >= 10, "c2"
+            prob += -y + z == 7, "c3"
+
+            if self.solver.__class__ in [
+                CPLEX_CMD,
+                COINMP_DLL,
+                PULP_CBC_CMD,
+                YAPOSIB,
+                PYGLPK,
+                HiGHS,
+            ]:
+                pulpTestCheck(
+                    prob,
+                    self.solver,
+                    [const.LpStatusOptimal],
+                    sol={x: 4, y: 1, z: 8},
+                    reducedcosts={x: 1.0, y: 13, z: 0},
+                    duals={"c1": 0, "c2": 0, "c3": 9},
+                    slacks={"c1": 0, "c2": -2.0, "c3": 0},
+                )
+
         def test_column_based_modelling_resolve(self):
             prob = LpProblem(self._testMethodName, const.LpMinimize)
             obj = LpConstraintVar("obj")
